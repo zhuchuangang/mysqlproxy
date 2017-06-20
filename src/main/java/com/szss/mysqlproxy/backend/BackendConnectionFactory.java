@@ -1,6 +1,5 @@
 package com.szss.mysqlproxy.backend;
 
-import com.szss.mysqlproxy.frontend.FrontendConnection;
 import com.szss.mysqlproxy.net.buffer.ConByteBuffer;
 import com.szss.mysqlproxy.util.NetSystem;
 import java.io.IOException;

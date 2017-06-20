@@ -1,8 +1,10 @@
 package com.szss.mysqlproxy.frontend.state;
 
 import com.szss.mysqlproxy.backend.BackendConnection;
-import com.szss.mysqlproxy.backend.BackendConnectionPool;
 import com.szss.mysqlproxy.frontend.FrontendConnection;
+import com.szss.mysqlproxy.net.Connection;
+import com.szss.mysqlproxy.protocol.CommandPacket;
+import com.szss.mysqlproxy.protocol.MySQLPacket;
 import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,8 +30,12 @@ public class FrontendCommandState implements FrontendState {
 
   @Override
   public void handle(FrontendConnection connection) throws IOException {
-    byte packetType = connection.getReadBuffer().getByte(4);
+    byte packetType=connection.getReadBuffer().getByte(4);
+    if (packetType == MySQLPacket.COM_QUERY){
+      CommandPacket cp=new CommandPacket();
+      cp.read(connection.getReadBuffer().getByteBuffer());
+    }
     BackendConnection backendCon = connection.getBackendConnection();
-    //backendCon.getNioHandler().writeData();
+    backendCon.doWriteData();
   }
 }

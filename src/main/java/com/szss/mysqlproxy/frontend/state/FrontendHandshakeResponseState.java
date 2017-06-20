@@ -57,7 +57,7 @@ public class FrontendHandshakeResponseState implements FrontendState {
       if (logger.isDebugEnabled()) {
         logger.debug("login authentication success,server response client ok packet:{}", op);
       }
-      connection.getNioHandler().writeData(writeBuffer);
+      connection.doWriteData();
       BackendConnectionPool connectionPool = BackendConnectionPool.getInstance();
       BackendConnection bc = connectionPool.connection();
       connection.setBackendConnection(bc);
@@ -83,7 +83,7 @@ public class FrontendHandshakeResponseState implements FrontendState {
       if (logger.isDebugEnabled()) {
         logger.debug("login authentication error,server response client error packet:{}", ep);
       }
-      connection.getNioHandler().writeData(writeBuffer);
+      connection.doWriteData();
       connection.setState(FrontendInitialHandshakeState.instance());
     }
 

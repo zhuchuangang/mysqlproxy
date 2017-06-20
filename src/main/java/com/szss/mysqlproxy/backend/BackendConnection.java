@@ -7,11 +7,15 @@ import com.szss.mysqlproxy.net.Connection;
 import com.szss.mysqlproxy.net.buffer.ConByteBuffer;
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Created by zcg on 2017/6/13.
  */
 public class BackendConnection extends Connection {
+
+  private static Logger logger = LogManager.getLogger(BackendConnection.class);
 
   private BackendState state;
   private int connectionState;
@@ -27,6 +31,12 @@ public class BackendConnection extends Connection {
   }
 
 
+  @Override
+  public void onConnection() throws IOException {
+    logger.info("Backend connection connect mysql server!");
+  }
+
+  @Override
   public void handle() throws IOException {
     state.handle(this);
   }

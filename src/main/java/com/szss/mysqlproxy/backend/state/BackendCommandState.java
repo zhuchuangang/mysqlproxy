@@ -24,7 +24,6 @@ public class BackendCommandState implements BackendState {
 
   @Override
   public void handle(BackendConnection connection) throws IOException {
-    logger.info("================================================");
-    connection.getNioHandler().writeData(connection.getWriteBuffer());
+    connection.doWriteData();
   }
 }

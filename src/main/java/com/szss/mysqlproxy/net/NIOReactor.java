@@ -1,9 +1,8 @@
 package com.szss.mysqlproxy.net;
 
-import com.szss.mysqlproxy.backend.BackendConnection;
-import com.szss.mysqlproxy.frontend.FrontendConnection;
 import com.szss.mysqlproxy.net.buffer.BufferPool;
 import java.io.IOException;
+import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.util.Iterator;
@@ -59,12 +58,28 @@ public class NIOReactor extends Thread {
       }
       Iterator<SelectionKey> iterator = keys.iterator();
       while (iterator.hasNext()) {
-        SelectionKey key = iterator.next();
-        NIOHandler handler = (NIOHandler) key.attachment();
-        if (handler != null) {
-          handler.run();
+        Connection con=null;
+        try {
+          SelectionKey key = iterator.next();
+          con = (Connection) key.attachment();
+          if (con != null) {
+            if (key.isValid() && key.isReadable()) {
+              con.doReadData();
+            }
+            if (key.isValid() && key.isWritable()) {
+              con.doWriteData();
+            }
+          }
+          iterator.remove();
+        }catch (Exception e){
+          if (e instanceof CancelledKeyException) {
+            if (logger.isDebugEnabled()) {
+              logger.debug("{} socket key canceled",con);
+            }
+          } else {
+            logger.warn("connection is error, {}",e);
+          }
         }
-        iterator.remove();
       }
       keys.clear();
     }
@@ -74,19 +89,15 @@ public class NIOReactor extends Thread {
     if (registerQueue.isEmpty()) {
       return;
     }
-    Connection c=null;
+    Connection c = null;
     while ((c = registerQueue.poll()) != null) {
       if (logger.isDebugEnabled()) {
         logger.debug("{} register queue poll {}", getName(), c);
       }
       try {
-        if (c instanceof FrontendConnection) {
-          new FrontendHandler(selector, (FrontendConnection) c);
-        } else if (c instanceof BackendConnection) {
-          new BackendHandler(selector, (BackendConnection) c);
-        }
+        c.register(selector);
         if (logger.isDebugEnabled()) {
-          logger.debug("{} create nioHandler,and register channel to listen for read event",
+          logger.debug("{} register channel to listen for read event",
               getName(), c);
         }
       } catch (Exception e) {

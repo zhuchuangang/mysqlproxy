@@ -1,9 +1,8 @@
 package com.szss.mysqlproxy.frontend;
 
 import com.szss.mysqlproxy.backend.BackendConnection;
-import com.szss.mysqlproxy.frontend.state.FrontendCommandState;
-import com.szss.mysqlproxy.frontend.state.FrontendState;
 import com.szss.mysqlproxy.frontend.state.FrontendInitialHandshakeState;
+import com.szss.mysqlproxy.frontend.state.FrontendState;
 import com.szss.mysqlproxy.net.Connection;
 import com.szss.mysqlproxy.net.buffer.ConByteBuffer;
 import java.io.IOException;
@@ -30,7 +29,13 @@ public class FrontendConnection extends Connection {
     this.writeBuffer = writeBuffer;
   }
 
+  @Override
+  public void onConnection() throws IOException {
+    logger.info("Front connection send handshake packet to client!");
+    state.handle(this);
+  }
 
+  @Override
   public void handle() throws IOException {
     state.handle(this);
   }

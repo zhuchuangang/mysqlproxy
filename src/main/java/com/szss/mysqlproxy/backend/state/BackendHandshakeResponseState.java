@@ -36,7 +36,7 @@ public class BackendHandshakeResponseState implements BackendState {
 
   @Override
   public void handle(BackendConnection connection) throws IOException {
-    byte packetType = connection.getReadBuffer().getByte(4);
+    byte packetType = connection.getReadBuffer().getByte(5);
     if (packetType == MySQLPacket.OK_PACKET) {
       connection.setState(BackendCommandState.instance());
       connection.setConnectionState(Connection.STATE_IDLE);
@@ -81,6 +81,6 @@ public class BackendHandshakeResponseState implements BackendState {
     ByteBuffer buffer = connection.getWriteBuffer().beginWrite(ap.calcPacketSize() + 4);
     ap.write(buffer);
     connection.getWriteBuffer().endWrite(buffer);
-    connection.getNioHandler().writeData(connection.getWriteBuffer());
+    connection.doWriteData();
   }
 }
