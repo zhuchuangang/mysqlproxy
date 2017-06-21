@@ -1,10 +1,9 @@
 package com.szss.mysqlproxy.frontend.state;
 
 import com.szss.mysqlproxy.backend.BackendConnection;
+import com.szss.mysqlproxy.backend.BackendConnectionPool;
 import com.szss.mysqlproxy.frontend.FrontendConnection;
 import com.szss.mysqlproxy.net.Connection;
-import com.szss.mysqlproxy.protocol.CommandPacket;
-import com.szss.mysqlproxy.protocol.MySQLPacket;
 import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,12 +29,25 @@ public class FrontendCommandState implements FrontendState {
 
   @Override
   public void handle(FrontendConnection connection) throws IOException {
-    byte packetType=connection.getReadBuffer().getByte(4);
-    if (packetType == MySQLPacket.COM_QUERY){
-      CommandPacket cp=new CommandPacket();
-      cp.read(connection.getReadBuffer().getByteBuffer());
+    if (connection.getBackendConnection() == null) {
+      BackendConnectionPool connectionPool = BackendConnectionPool.getInstance();
+      BackendConnection backendCon = connectionPool.connection(connection.getReactorName());
+      connection.setBackendConnection(backendCon);
     }
-    BackendConnection backendCon = connection.getBackendConnection();
-    backendCon.doWriteData();
+    if (connection.getBackendConnection().getConnectionState() == Connection.STATE_CONNECTING) {
+      connection.getTaskQueue().add(() -> {
+        BackendConnection backendCon = connection.getBackendConnection();
+        logger.info("mysql backend connection is idle,share the buffer of front connection!");
+        if (backendCon.getReadBuffer() != connection.getWriteBuffer()) {
+          backendCon.setReadBuffer(connection.getWriteBuffer());
+        }
+        if (backendCon.getWriteBuffer() != connection.getReadBuffer()) {
+          backendCon.setWriteBuffer(connection.getReadBuffer());
+        }
+        backendCon.enableWrite(false);
+      });
+    } else {
+      connection.getBackendConnection().enableWrite(false);
+    }
   }
 }

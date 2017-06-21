@@ -1,6 +1,10 @@
 package com.szss.mysqlproxy.net;
 
+import com.szss.mysqlproxy.backend.BackendConnection;
+import com.szss.mysqlproxy.backend.BackendConnectionFactory;
+import com.szss.mysqlproxy.backend.BackendConnectionPool;
 import com.szss.mysqlproxy.net.buffer.BufferPool;
+import com.szss.mysqlproxy.util.SystemConfig;
 import java.io.IOException;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
@@ -18,17 +22,19 @@ public class NIOReactor extends Thread {
 
   private static Logger logger = LogManager.getLogger(NIOReactor.class);
 
+  private static final String PREFIX_NAME = "nio-reactor-";
+
   private BufferPool bufferPool;
   //每个reactor都有各自的selector
   private Selector selector;
   //注册队列
   private ConcurrentLinkedQueue<Connection> registerQueue;
 
-  public NIOReactor(String name) throws IOException {
+  public NIOReactor(int index) throws IOException {
     this.bufferPool = new BufferPool(1024 * 1024 * 100, 1024 * 1024);
     this.selector = Selector.open();
     this.registerQueue = new ConcurrentLinkedQueue();
-    setName(name);
+    setName(PREFIX_NAME + index);
     logger.info("{} create reactor thread:{}", getName(), getName());
   }
 
@@ -58,7 +64,7 @@ public class NIOReactor extends Thread {
       }
       Iterator<SelectionKey> iterator = keys.iterator();
       while (iterator.hasNext()) {
-        Connection con=null;
+        Connection con = null;
         try {
           SelectionKey key = iterator.next();
           con = (Connection) key.attachment();
@@ -71,13 +77,13 @@ public class NIOReactor extends Thread {
             }
           }
           iterator.remove();
-        }catch (Exception e){
+        } catch (Exception e) {
           if (e instanceof CancelledKeyException) {
             if (logger.isDebugEnabled()) {
-              logger.debug("{} socket key canceled",con);
+              logger.debug("{} socket key canceled", con);
             }
           } else {
-            logger.warn("connection is error, {}",e);
+            logger.warn("connection is error", e);
           }
         }
       }
@@ -103,6 +109,15 @@ public class NIOReactor extends Thread {
       } catch (Exception e) {
         e.printStackTrace();
       }
+    }
+  }
+
+  public void initBackendConnetion() throws IOException {
+    int initSize = SystemConfig.instance().getInitSize();
+    BackendConnectionPool conPool = BackendConnectionPool.getInstance();
+    for (int i = 0; i < initSize; i++) {
+      BackendConnection backendCon = BackendConnectionFactory.make(getName());
+      conPool.addConnection(backendCon);
     }
   }
 

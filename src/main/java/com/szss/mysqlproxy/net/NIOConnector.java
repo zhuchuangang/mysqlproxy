@@ -11,7 +11,6 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ThreadLocalRandom;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -76,8 +75,9 @@ public class NIOConnector extends Thread {
           } catch (IOException e) {
             e.printStackTrace();
           }
-          int index = ThreadLocalRandom.current().nextInt(reactors.length);
-          reactors[index].postRegister(connection);
+          String reactorName = connection.getReactorName();
+          String index = reactorName.replace("nio-reactor-", "");
+          reactors[Integer.parseInt(index)].postRegister(connection);
         }
         iterator.remove();
       }

@@ -9,6 +9,8 @@ public class SystemConfig {
   private String database;
   private String username;
   private String password;
+  //每个reactor连接池大小
+  private int initSize;
 
   private static SystemConfig config;
 
@@ -60,5 +62,13 @@ public class SystemConfig {
 
   public void setPassword(String password) {
     this.password = password;
+  }
+
+  public int getInitSize() {
+    return initSize;
+  }
+
+  public void setInitSize(int initSize) {
+    this.initSize = initSize;
   }
 }

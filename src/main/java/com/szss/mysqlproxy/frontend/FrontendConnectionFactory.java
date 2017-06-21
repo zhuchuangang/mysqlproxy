@@ -9,10 +9,12 @@ import java.nio.channels.SocketChannel;
  */
 public class FrontendConnectionFactory {
 
-  public static FrontendConnection make(SocketChannel socketChannel, BufferPool bufferPool) {
+  public static FrontendConnection make(String reactorName, SocketChannel socketChannel,
+      BufferPool bufferPool) {
     ConByteBuffer readBuffer = new ConByteBuffer(bufferPool);
     ConByteBuffer writeBuffer = new ConByteBuffer(bufferPool);
-    FrontendConnection connection = new FrontendConnection(socketChannel, readBuffer, writeBuffer);
+    FrontendConnection connection = new FrontendConnection(reactorName, socketChannel, readBuffer,
+        writeBuffer);
     return connection;
   }
 

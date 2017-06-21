@@ -1,6 +1,8 @@
 package com.szss.mysqlproxy.backend.state;
 
 import com.szss.mysqlproxy.backend.BackendConnection;
+import com.szss.mysqlproxy.frontend.FrontendConnection;
+import com.szss.mysqlproxy.frontend.NoneBlockTask;
 import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,6 +11,7 @@ import org.apache.logging.log4j.Logger;
  * Created by zcg on 2017/6/20.
  */
 public class BackendCommandState implements BackendState {
+
   private static Logger logger = LogManager.getLogger(BackendCommandState.class);
   private static BackendCommandState state;
 
@@ -24,6 +27,14 @@ public class BackendCommandState implements BackendState {
 
   @Override
   public void handle(BackendConnection connection) throws IOException {
-    connection.doWriteData();
+    FrontendConnection frontCon = connection.getFrontendConnection();
+    if (frontCon != null&&!frontCon.getTaskQueue().isEmpty()) {
+      NoneBlockTask task = frontCon.getTaskQueue().removeFirst();
+      try {
+        task.execute();
+      } catch (Exception e) {
+
+      }
+    }
   }
 }

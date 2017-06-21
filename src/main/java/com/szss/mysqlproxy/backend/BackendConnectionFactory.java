@@ -10,12 +10,13 @@ import java.nio.channels.SocketChannel;
  */
 public class BackendConnectionFactory {
 
-  public static BackendConnection make() throws IOException {
+  public static BackendConnection make(String reactorName) throws IOException {
     ConByteBuffer readBuffer = new ConByteBuffer();
     ConByteBuffer writeBuffer = new ConByteBuffer();
     SocketChannel socketChannel = SocketChannel.open();
     socketChannel.configureBlocking(false);
-    BackendConnection connection = new BackendConnection(socketChannel, readBuffer, writeBuffer);
+    BackendConnection connection = new BackendConnection(reactorName, socketChannel, readBuffer,
+        writeBuffer);
     NetSystem.instance().getConnector().postRegister(connection);
     return connection;
   }

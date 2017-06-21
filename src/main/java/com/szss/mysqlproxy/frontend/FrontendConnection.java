@@ -7,6 +7,7 @@ import com.szss.mysqlproxy.net.Connection;
 import com.szss.mysqlproxy.net.buffer.ConByteBuffer;
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
+import java.util.LinkedList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,12 +22,17 @@ public class FrontendConnection extends Connection {
 
   private BackendConnection backendConnection;
 
-  public FrontendConnection(SocketChannel socketChannel, ConByteBuffer readBuffer,
+  private LinkedList<NoneBlockTask> taskQueue;
+
+  public FrontendConnection(String reactorName, SocketChannel socketChannel,
+      ConByteBuffer readBuffer,
       ConByteBuffer writeBuffer) {
+    this.reactorName = reactorName;
     this.state = FrontendInitialHandshakeState.instance();
     this.socketChannel = socketChannel;
     this.readBuffer = readBuffer;
     this.writeBuffer = writeBuffer;
+    this.taskQueue = new LinkedList();
   }
 
   @Override
@@ -47,14 +53,18 @@ public class FrontendConnection extends Connection {
   public void setBackendConnection(BackendConnection backendConnection) {
     this.backendConnection = backendConnection;
     this.backendConnection.setFrontendConnection(this);
-    if (this.backendConnection.getConnectionState() == Connection.STATE_IDLE) {
-      logger.info("mysql backend connection is idle,share the buffer of front connection!");
-      this.backendConnection.setReadBuffer(this.getWriteBuffer());
-      this.backendConnection.setWriteBuffer(this.getReadBuffer());
-    }
+//    if (this.backendConnection.getConnectionState() == Connection.STATE_IDLE) {
+//      logger.info("mysql backend connection is idle,share the buffer of front connection!");
+//      this.backendConnection.setReadBuffer(this.getWriteBuffer());
+//      this.backendConnection.setWriteBuffer(this.getReadBuffer());
+//    }
   }
 
   public BackendConnection getBackendConnection() {
     return backendConnection;
+  }
+
+  public LinkedList<NoneBlockTask> getTaskQueue() {
+    return taskQueue;
   }
 }

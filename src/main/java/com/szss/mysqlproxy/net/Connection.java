@@ -20,6 +20,8 @@ public abstract class Connection {
   protected SelectionKey selectionKey;
   protected ConByteBuffer readBuffer;
   protected ConByteBuffer writeBuffer;
+  protected String reactorName;
+
 
   public static final int STATE_CONNECTING = 0;
   public static final int STATE_IDLE = 1;
@@ -124,5 +126,13 @@ public abstract class Connection {
 
   public void setWriteBuffer(ConByteBuffer writeBuffer) {
     this.writeBuffer = writeBuffer;
+  }
+
+  public String getReactorName() {
+    return reactorName;
+  }
+
+  public void setReactorName(String reactorName) {
+    this.reactorName = reactorName;
   }
 }

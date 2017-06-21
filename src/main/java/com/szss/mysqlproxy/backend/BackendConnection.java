@@ -21,8 +21,10 @@ public class BackendConnection extends Connection {
   private int connectionState;
   private FrontendConnection frontendConnection;
 
-  public BackendConnection(SocketChannel socketChannel, ConByteBuffer readBuffer,
+  public BackendConnection(String reactorName, SocketChannel socketChannel,
+      ConByteBuffer readBuffer,
       ConByteBuffer writeBuffer) {
+    this.reactorName = reactorName;
     this.socketChannel = socketChannel;
     this.readBuffer = readBuffer;
     this.writeBuffer = writeBuffer;

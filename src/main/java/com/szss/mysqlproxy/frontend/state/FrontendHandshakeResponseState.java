@@ -1,7 +1,5 @@
 package com.szss.mysqlproxy.frontend.state;
 
-import com.szss.mysqlproxy.backend.BackendConnection;
-import com.szss.mysqlproxy.backend.BackendConnectionPool;
 import com.szss.mysqlproxy.frontend.FakeMysqlServer;
 import com.szss.mysqlproxy.frontend.FrontendConnection;
 import com.szss.mysqlproxy.net.buffer.ConByteBuffer;
@@ -58,9 +56,6 @@ public class FrontendHandshakeResponseState implements FrontendState {
         logger.debug("login authentication success,server response client ok packet:{}", op);
       }
       connection.doWriteData();
-      BackendConnectionPool connectionPool = BackendConnectionPool.getInstance();
-      BackendConnection bc = connectionPool.connection();
-      connection.setBackendConnection(bc);
       connection.setState(FrontendCommandState.instance());
     } else {
       ERRPacket ep = new ERRPacket();

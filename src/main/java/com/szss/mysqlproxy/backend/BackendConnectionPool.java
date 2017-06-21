@@ -1,7 +1,9 @@
 package com.szss.mysqlproxy.backend;
 
 import java.io.IOException;
-import java.util.concurrent.LinkedTransferQueue;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,10 +15,10 @@ public class BackendConnectionPool {
   private static Logger logger = LogManager.getLogger(BackendConnectionPool.class);
 
   private static BackendConnectionPool pool;
-  private LinkedTransferQueue<BackendConnection> connections;
+  private ConcurrentHashMap<String, List<BackendConnection>> conMap;
 
   private BackendConnectionPool() {
-    connections = new LinkedTransferQueue<>();
+    conMap = new ConcurrentHashMap();
   }
 
   public static BackendConnectionPool getInstance() {
@@ -27,26 +29,24 @@ public class BackendConnectionPool {
   }
 
   public void addConnection(BackendConnection connection) {
-    this.connections.add(connection);
+    List<BackendConnection> backendCons = conMap.get(connection.getReactorName());
+    if (backendCons == null) {
+      backendCons = new LinkedList<>();
+    }
+    backendCons.add(connection);
+    this.conMap.put(connection.getReactorName(), backendCons);
   }
 
-  public BackendConnection connection() throws IOException {
+  public BackendConnection connection(String reactorName) throws IOException {
     BackendConnection con = null;
-    if (!this.connections.isEmpty()) {
-      con = this.connections.poll();
+    List<BackendConnection> backendCons = conMap.get(reactorName);
+    if (backendCons!=null&&!backendCons.isEmpty()) {
+      con = backendCons.remove(0);
     }
     if (con == null) {
-      con = BackendConnectionFactory.make();
+      con = BackendConnectionFactory.make(reactorName);
     }
     return con;
-  }
-
-  public void init() throws IOException {
-    for (int i = 0; i < 1; i++) {
-      BackendConnection con = BackendConnectionFactory.make();
-      connections.add(con);
-      logger.info("init mysql backend connection {}",con);
-    }
   }
 
 }
