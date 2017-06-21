@@ -5,6 +5,7 @@ import com.szss.mysqlproxy.backend.state.BackendState;
 import com.szss.mysqlproxy.frontend.FrontendConnection;
 import com.szss.mysqlproxy.net.Connection;
 import com.szss.mysqlproxy.net.buffer.ConByteBuffer;
+import com.szss.mysqlproxy.protocol.MySQLPacket;
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
 import org.apache.logging.log4j.LogManager;
@@ -27,7 +28,7 @@ public class BackendConnection extends Connection {
   private BackendState state;
   private int connectionState;
   //还有多少字节包头或包体读完
-  private int leftSize=0;
+  private int leftSize = 0;
   //如果是包头没有读完，那么缓存上次度过的一部分包头，header大小为4个字节
   private byte[] header;
   private FrontendConnection frontendConnection;
@@ -53,6 +54,43 @@ public class BackendConnection extends Connection {
   @Override
   public void handle() throws IOException {
     state.handle(this);
+  }
+
+
+  public void nextConnectionState(byte packetType) {
+    logger.info("The state of the back connection is {}",connectionState);
+    switch (connectionState) {
+      case Connection.IDLE_STATE:
+        if (packetType == MySQLPacket.COM_QUERY) {
+          this.setConnectionState(BackendConnection.RESULT_INIT_STATUS);
+        } else if (packetType == MySQLPacket.COM_QUIT) {
+          this.setConnectionState(BackendConnection.IDLE_STATE);
+        }
+        break;
+
+      case BackendConnection.RESULT_INIT_STATUS:
+        if (packetType == MySQLPacket.OK_PACKET || packetType == MySQLPacket.ERROR_PACKET) {
+          this.setConnectionState(BackendConnection.IDLE_STATE);
+        } else {
+          this.setConnectionState(BackendConnection.RESULT_HEADER_STATUS);
+        }
+        break;
+
+      case BackendConnection.RESULT_HEADER_STATUS:
+        if (packetType == MySQLPacket.ERROR_PACKET) {
+          this.setConnectionState(BackendConnection.IDLE_STATE);
+        } else if (packetType == MySQLPacket.EOF_PACKET) {
+          this.setConnectionState(BackendConnection.RESULT_FETCH_STATUS);
+        }
+        break;
+
+      case BackendConnection.RESULT_FETCH_STATUS:
+        if (packetType == MySQLPacket.EOF_PACKET || packetType == MySQLPacket.ERROR_PACKET) {
+          this.setConnectionState(BackendConnection.IDLE_STATE);
+        }
+        break;
+    }
+    logger.info("The next state of the back connection is {}",connectionState);
   }
 
   public BackendState getState() {

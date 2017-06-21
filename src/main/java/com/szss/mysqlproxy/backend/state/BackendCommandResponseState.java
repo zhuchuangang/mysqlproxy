@@ -94,12 +94,12 @@ public class BackendCommandResponseState implements BackendState {
 
       //解析报文类型
       packetType = dataBuffer.getByte(offset + Connection.MYSQL_PACKET_HEADER_SIZE);
-      logger.info("The packet type is {}!",packetType);
+      logger.info("The packet type is 0x{}",Integer.toHexString(packetType & 0xff));
       //完整的报文，直接根据报文长度，位移到下一个报文的开始位置
       offset += length;
       dataBuffer.setReadingPos(offset);
       //根据报文类型和当前连接的状态，推动连接状态变化
-      nextConnectionState(connection, packetType);
+      connection.nextConnectionState(packetType);
     }
     //如果连接空闲，清除缓存值
     if (connection.getConnectionState() == Connection.IDLE_STATE) {
@@ -108,35 +108,5 @@ public class BackendCommandResponseState implements BackendState {
     }
     //将报文由前段连接写出
     connection.getFrontendConnection().enableWrite(false);
-  }
-
-
-  private void nextConnectionState(BackendConnection connection, byte packetType) {
-    if (connection.getConnectionState() == Connection.IDLE_STATE) {
-      if (packetType == MySQLPacket.COM_QUERY) {
-        connection.setConnectionState(BackendConnection.RESULT_INIT_STATUS);
-      } else if (packetType == MySQLPacket.COM_QUIT) {
-        connection.setConnectionState(BackendConnection.IDLE_STATE);
-      }
-    }
-    if (connection.getConnectionState() == BackendConnection.RESULT_INIT_STATUS) {
-      if (packetType == MySQLPacket.OK_PACKET || packetType == MySQLPacket.ERROR_PACKET) {
-        connection.setConnectionState(BackendConnection.IDLE_STATE);
-      } else {
-        connection.setConnectionState(BackendConnection.RESULT_HEADER_STATUS);
-      }
-    }
-    if (connection.getConnectionState() == BackendConnection.RESULT_HEADER_STATUS) {
-      if (packetType == MySQLPacket.ERROR_PACKET) {
-        connection.setConnectionState(BackendConnection.IDLE_STATE);
-      } else if (packetType == MySQLPacket.EOF_PACKET) {
-        connection.setConnectionState(BackendConnection.RESULT_FETCH_STATUS);
-      }
-    }
-    if (connection.getConnectionState() == BackendConnection.RESULT_FETCH_STATUS) {
-      if (packetType == MySQLPacket.OK_PACKET || packetType == MySQLPacket.ERROR_PACKET) {
-        connection.setConnectionState(BackendConnection.IDLE_STATE);
-      }
-    }
   }
 }

@@ -47,6 +47,9 @@ public class FrontendCommandState implements FrontendState {
         backendCon.enableWrite(false);
       });
     } else {
+      //根据前段报文类型，推动状态机状态变化
+      byte packetType = connection.getBackendConnection().getWriteBuffer().getByte(4);
+      connection.getBackendConnection().nextConnectionState(packetType);
       connection.getBackendConnection().enableWrite(false);
     }
   }

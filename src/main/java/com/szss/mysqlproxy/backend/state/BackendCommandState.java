@@ -28,10 +28,12 @@ public class BackendCommandState implements BackendState {
   @Override
   public void handle(BackendConnection connection) throws IOException {
     FrontendConnection frontCon = connection.getFrontendConnection();
-    if (frontCon != null&&!frontCon.getTaskQueue().isEmpty()) {
+    if (frontCon != null && !frontCon.getTaskQueue().isEmpty()) {
       NoneBlockTask task = frontCon.getTaskQueue().removeFirst();
       try {
         task.execute();
+        byte packetType = connection.getWriteBuffer().getByte(4);
+        connection.nextConnectionState(packetType);
         connection.setState(BackendCommandResponseState.instance());
       } catch (Exception e) {
 
