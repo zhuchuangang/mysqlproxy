@@ -23,17 +23,12 @@ public abstract class Connection {
   protected String reactorName;
 
 
-  public static final int STATE_CONNECTING = 0;
-  public static final int STATE_IDLE = 1;
-  public static final int STATE_CLOSING = -1;
-  public static final int STATE_CLOSED = -2;
+  public static final int CONNECTING_STATE = 0;
+  public static final int IDLE_STATE = 1;
+  public static final int CLOSING_STATE = -1;
+  public static final int CLOSED_STATE = -2;
 
-  public static final int CMD_QUERY_STATUS = 11;
-  public static final int RESULT_WAIT_STATUS = 21;
-  public static final int RESULT_INIT_STATUS = 22;
-  public static final int RESULT_FETCH_STATUS = 23;
-  public static final int RESULT_HEADER_STATUS = 24;
-  public static final int RESULT_FAIL_STATUS = 29;
+  public final static int MYSQL_PACKET_HEADER_SIZE = 4;
 
 
   public void register(Selector selector) throws IOException {
@@ -103,6 +98,23 @@ public abstract class Connection {
 
   }
 
+  public static final boolean validateHeader(final long offset, final long position) {
+    return (position >= (offset + MYSQL_PACKET_HEADER_SIZE));
+  }
+
+  public static final int getPacketLength(ConByteBuffer buffer, int offset) throws IOException {
+    int length = buffer.getByte(offset) & 0xff;
+    length |= (buffer.getByte(++offset) & 0xff) << 8;
+    length |= (buffer.getByte(++offset) & 0xff) << 16;
+    return length + MYSQL_PACKET_HEADER_SIZE;
+  }
+
+  public static final int getLength(ConByteBuffer buffer, int offset) throws IOException {
+    int length = buffer.getByte(offset) & 0xff;
+    length |= (buffer.getByte(++offset) & 0xff) << 8;
+    length |= (buffer.getByte(++offset) & 0xff) << 16;
+    return length;
+  }
 
   public SocketChannel getSocketChannel() {
     return socketChannel;

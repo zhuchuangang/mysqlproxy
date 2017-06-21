@@ -39,7 +39,7 @@ public class BackendHandshakeResponseState implements BackendState {
     byte packetType = connection.getReadBuffer().getByte(5);
     if (packetType == MySQLPacket.OK_PACKET) {
       connection.setState(BackendCommandState.instance());
-      connection.setConnectionState(Connection.STATE_IDLE);
+      connection.setConnectionState(Connection.IDLE_STATE);
       FrontendConnection frontCon = connection.getFrontendConnection();
 //      if (frontCon != null) {
 //        //后端登录验证成功，共享前后端buffer

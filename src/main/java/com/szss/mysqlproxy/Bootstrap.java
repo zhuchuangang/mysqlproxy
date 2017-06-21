@@ -14,7 +14,7 @@ public class Bootstrap {
   public static void main(String[] args) {
     SystemConfig config = SystemConfig.instance();
     config.setHost("127.0.0.1");
-    config.setPort(3308);
+    config.setPort(3306);
     config.setDatabase("mysql");
     config.setUsername("root");
     config.setPassword("123456");
@@ -26,7 +26,7 @@ public class Bootstrap {
         reactors[i].start();
       }
       NIOConnector connector = new NIOConnector(reactors);
-      NIOAcceptor acceptor = new NIOAcceptor(3306, reactors);
+      NIOAcceptor acceptor = new NIOAcceptor(3308, reactors);
 
       NetSystem netSystem = NetSystem.instance();
       netSystem.setConnector(connector);

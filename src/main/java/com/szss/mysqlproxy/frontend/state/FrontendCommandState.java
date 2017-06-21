@@ -34,7 +34,7 @@ public class FrontendCommandState implements FrontendState {
       BackendConnection backendCon = connectionPool.connection(connection.getReactorName());
       connection.setBackendConnection(backendCon);
     }
-    if (connection.getBackendConnection().getConnectionState() == Connection.STATE_CONNECTING) {
+    if (connection.getBackendConnection().getConnectionState() == Connection.CONNECTING_STATE) {
       connection.getTaskQueue().add(() -> {
         BackendConnection backendCon = connection.getBackendConnection();
         logger.info("mysql backend connection is idle,share the buffer of front connection!");

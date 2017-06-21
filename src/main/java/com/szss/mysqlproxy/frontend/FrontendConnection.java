@@ -53,7 +53,7 @@ public class FrontendConnection extends Connection {
   public void setBackendConnection(BackendConnection backendConnection) {
     this.backendConnection = backendConnection;
     this.backendConnection.setFrontendConnection(this);
-//    if (this.backendConnection.getConnectionState() == Connection.STATE_IDLE) {
+//    if (this.backendConnection.getConnectionState() == Connection.IDLE_STATE) {
 //      logger.info("mysql backend connection is idle,share the buffer of front connection!");
 //      this.backendConnection.setReadBuffer(this.getWriteBuffer());
 //      this.backendConnection.setWriteBuffer(this.getReadBuffer());

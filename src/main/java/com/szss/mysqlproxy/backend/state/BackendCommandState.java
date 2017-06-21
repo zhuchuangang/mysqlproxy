@@ -32,6 +32,7 @@ public class BackendCommandState implements BackendState {
       NoneBlockTask task = frontCon.getTaskQueue().removeFirst();
       try {
         task.execute();
+        connection.setState(BackendCommandResponseState.instance());
       } catch (Exception e) {
 
       }
