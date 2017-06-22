@@ -31,7 +31,7 @@ public class NIOReactor extends Thread {
   private ConcurrentLinkedQueue<Connection> registerQueue;
 
   public NIOReactor(int index) throws IOException {
-    this.bufferPool = new BufferPool(1024 * 1024 * 100, 1024 * 1024);
+    this.bufferPool = new BufferPool(1024 * 1024 * 100, 1024*1024);
     this.selector = Selector.open();
     this.registerQueue = new ConcurrentLinkedQueue();
     setName(PREFIX_NAME + index);

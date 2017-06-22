@@ -85,6 +85,6 @@ public class BackendHandshakeResponseState implements BackendState {
     ByteBuffer buffer = connection.getWriteBuffer().beginWrite(ap.calcPacketSize() + 4);
     ap.write(buffer);
     connection.getWriteBuffer().endWrite(buffer);
-    connection.doWriteData();
+    connection.enableWrite(false);
   }
 }

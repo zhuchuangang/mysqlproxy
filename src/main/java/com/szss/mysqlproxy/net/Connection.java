@@ -71,17 +71,50 @@ public abstract class Connection {
       logger.info("The frontend connection write {} bytes,and hasRemaining is {}", writeNum, hasRemaining);
     }
     if (hasRemaining) {
+      //if (selectionKey.isValid() && selectionKey.isReadable()) {
+        //logger.info("doWriteData disable read operation");
+        disableRead();
+      //}
       if (selectionKey.isValid() && !selectionKey.isWritable()) {
-        logger.info("doWriteData enable write operation");
+        //logger.info("doWriteData enable write operation");
         enableWrite(false);
       }
     } else {
+      if (selectionKey.isValid() && !selectionKey.isReadable()) {
+        //logger.info("doWriteData enable read operation");
+        enableRead(false);
+      }
       if (selectionKey.isValid() && selectionKey.isWritable()) {
-        logger.info("doWriteData disable write operation");
+        //logger.info("doWriteData disable write operation");
         disableWrite();
       }
     }
   }
+
+  public void disableRead(){
+    try {
+      selectionKey.interestOps(selectionKey.interestOps() & ~SelectionKey.OP_READ);
+      logger.info("disable read operation");
+    } catch (Exception e) {
+      logger.error("can't disable read {},connection is {}", e, this);
+    }
+  }
+
+  public void enableRead(boolean wakeup) {
+    boolean needWakeup = false;
+    try {
+      selectionKey.interestOps(selectionKey.interestOps() | SelectionKey.OP_READ);
+      logger.info("enable read operation");
+      needWakeup = true;
+    } catch (Exception e) {
+      e.printStackTrace();
+      logger.error("can't enable read {},connection is {}", e, this);
+    }
+    if (needWakeup && wakeup) {
+      selector.wakeup();
+    }
+  }
+
 
   public void disableWrite() {
     try {
@@ -106,7 +139,6 @@ public abstract class Connection {
     if (needWakeup && wakeup) {
       selector.wakeup();
     }
-
   }
 
   public static final boolean validateHeader(final long offset, final long position) {

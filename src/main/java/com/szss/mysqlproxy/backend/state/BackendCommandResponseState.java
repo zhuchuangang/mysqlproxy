@@ -29,7 +29,8 @@ public class BackendCommandResponseState implements BackendState {
   @Override
   public void handle(BackendConnection connection) throws IOException {
     final ConByteBuffer dataBuffer = connection.getReadBuffer();
-    logger.info("The reading position is {}，the writing position is {}",dataBuffer.readPos(),dataBuffer.writingPos());
+    logger.info("The reading position is {}，the writing position is {}", dataBuffer.readPos(),
+        dataBuffer.writingPos());
     byte packetType = -1;
     int offset = dataBuffer.readPos();
     int length = 0;
@@ -40,21 +41,37 @@ public class BackendCommandResponseState implements BackendState {
     //报文处理分两种情况：1.包头没有读完 2.包体没有读完
     while (true) {
 
-      //如果缓存了头部数据，说明上一次读取信息的最后一个mysql包头信息没有读完
+      //情况1的后续处理，如果缓存了头部数据，说明上一次读取信息的最后一个mysql包头信息没有读完
+      int leftSize = connection.getLeftSize();
       if (connection.getHeader() != null) {
-        int leftSize = connection.getLeftSize();
         //获取缓存了头部数据,包头数据可能不完成
         byte[] header = connection.getHeader();
         //获取上一次剩余没有读取的包头长度
         //获取剩余包头数据
         for (int i = 0; i < leftSize; i++) {
-          header[4 - leftSize + i] = dataBuffer.getByte(offset+ 4 - leftSize + i);
+          header[4 - leftSize + i] = dataBuffer.getByte(offset + 4 - leftSize + i);
         }
         //拼接包体
         int bodyLength = Connection.getLength(dataBuffer, offset);
         //设置offset
-        offset += leftSize+bodyLength;
+        offset += leftSize + bodyLength;
+        logger.info("A.  Skip {} bytes", leftSize+bodyLength);
+        connection.setLeftSize(0);
         connection.setHeader(null);
+      }
+
+      //情况2的后续处理
+      if (connection.getHeader() == null && leftSize != 0) {
+        if (limit-offset>=leftSize) {
+          offset += leftSize;
+          logger.info("B.  Skip {} bytes", leftSize);
+          connection.setLeftSize(0);
+        }else {
+          int skip=limit-offset;
+          offset+=skip;
+          connection.setLeftSize(leftSize-(limit-offset));
+          logger.info("=====================Skip {} bytes", skip);
+        }
       }
 
       //情况1：readBuffer中最后一个mysql报文的包头没有读完
@@ -78,7 +95,7 @@ public class BackendCommandResponseState implements BackendState {
 
       //获取mysql包长度，包括包头部分
       length = Connection.getPacketLength(dataBuffer, offset);
-      logger.info("The packet length is {}",length);
+      logger.info("The packet length is {}", length);
 
       //情况2：readBuffer中最后一个mysql报文的包体没有读完
       //如果包体部分没有读完，计算下次reactor读取数据后，offset位移的字节数
@@ -86,16 +103,19 @@ public class BackendCommandResponseState implements BackendState {
         //包体部分没有读完的长度
         int left = (length + offset) - limit;
         connection.setLeftSize(left);
-        logger.info("Not whole package,remain {} bytes what will be readed by the reactor on this next time！",left);
+        logger.info(
+            "Not whole package,remain {} bytes what will be readed by the reactor on this next time！",
+            left);
         //跳出循环，到此readBuffer已经解析完毕
         break;
       }
 
       //解析报文类型
       packetType = dataBuffer.getByte(offset + Connection.MYSQL_PACKET_HEADER_SIZE);
-      logger.info("The packet type is 0x{}",Integer.toHexString(packetType & 0xff));
+      logger.info("The packet type is 0x{}", Integer.toHexString(packetType & 0xff));
       //完整的报文，直接根据报文长度，位移到下一个报文的开始位置
       offset += length;
+      logger.info("C.  Skip {} bytes", length);
       dataBuffer.setReadingPos(offset);
       //根据报文类型和当前连接的状态，推动连接状态变化
       connection.nextConnectionState(packetType);
@@ -108,6 +128,6 @@ public class BackendCommandResponseState implements BackendState {
       connection.setHeader(null);
     }
     //将报文由前段连接写出
-    connection.getFrontendConnection().doWriteData();
+    connection.getFrontendConnection().enableWrite(true);
   }
 }

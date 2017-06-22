@@ -58,7 +58,7 @@ public class BackendConnection extends Connection {
 
 
   public void nextConnectionState(byte packetType) {
-    logger.info("The state of the back connection is {}",connectionState);
+    //logger.info("The state of the back connection is {}",connectionState);
     switch (connectionState) {
       case Connection.IDLE_STATE:
         if (packetType == MySQLPacket.COM_QUERY) {
@@ -90,7 +90,7 @@ public class BackendConnection extends Connection {
         }
         break;
     }
-    logger.info("The next state of the back connection is {}",connectionState);
+    //logger.info("The next state of the back connection is {}",connectionState);
   }
 
   public BackendState getState() {

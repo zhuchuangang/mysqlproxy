@@ -36,7 +36,7 @@ public class FrontendInitialHandshakeState implements FrontendState {
     ByteBuffer buf=writeBuffer.beginWrite(handshake.calcPacketSize()+4);
     handshake.write(buf);
     writeBuffer.endWrite(buf);
-    connection.doWriteData();
+    connection.enableWrite(false);
     connection.setState(FrontendHandshakeResponseState.instance());
   }
 }

@@ -55,7 +55,7 @@ public class FrontendHandshakeResponseState implements FrontendState {
       if (logger.isDebugEnabled()) {
         logger.debug("login authentication success,server response client ok packet:{}", op);
       }
-      connection.doWriteData();
+      connection.enableWrite(false);
       connection.setState(FrontendCommandState.instance());
     } else {
       ERRPacket ep = new ERRPacket();
@@ -78,7 +78,7 @@ public class FrontendHandshakeResponseState implements FrontendState {
       if (logger.isDebugEnabled()) {
         logger.debug("login authentication error,server response client error packet:{}", ep);
       }
-      connection.doWriteData();
+      connection.enableWrite(false);
       connection.setState(FrontendInitialHandshakeState.instance());
     }
 
