@@ -1,5 +1,6 @@
 package com.szss.mysqlproxy.net;
 
+import com.szss.mysqlproxy.backend.BackendConnection;
 import com.szss.mysqlproxy.net.buffer.ConByteBuffer;
 import java.io.IOException;
 import java.nio.channels.SelectionKey;
@@ -64,12 +65,19 @@ public abstract class Connection {
   public void doWriteData() throws IOException {
     int writeNum = writeBuffer.transferTo(socketChannel);
     boolean hasRemaining = writeBuffer.hasRemaining();
+    if (this instanceof BackendConnection) {
+      logger.info("The backend connection write {} bytes,and hasRemaining is {}", writeNum, hasRemaining);
+    }else{
+      logger.info("The frontend connection write {} bytes,and hasRemaining is {}", writeNum, hasRemaining);
+    }
     if (hasRemaining) {
       if (selectionKey.isValid() && !selectionKey.isWritable()) {
+        logger.info("doWriteData enable write operation");
         enableWrite(false);
       }
     } else {
       if (selectionKey.isValid() && selectionKey.isWritable()) {
+        logger.info("doWriteData disable write operation");
         disableWrite();
       }
     }
@@ -78,6 +86,7 @@ public abstract class Connection {
   public void disableWrite() {
     try {
       selectionKey.interestOps(selectionKey.interestOps() & ~SelectionKey.OP_WRITE);
+      logger.info("disable write operation");
     } catch (Exception e) {
       logger.error("can't disable write {},connection is {}", e, this);
     }
@@ -88,8 +97,10 @@ public abstract class Connection {
     boolean needWakeup = false;
     try {
       selectionKey.interestOps(selectionKey.interestOps() | SelectionKey.OP_WRITE);
+      logger.info("enable write operation");
       needWakeup = true;
     } catch (Exception e) {
+      e.printStackTrace();
       logger.error("can't enable write {},connection is {}", e, this);
     }
     if (needWakeup && wakeup) {

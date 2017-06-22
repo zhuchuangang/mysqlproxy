@@ -6,6 +6,7 @@ import com.szss.mysqlproxy.frontend.state.FrontendState;
 import com.szss.mysqlproxy.net.Connection;
 import com.szss.mysqlproxy.net.buffer.ConByteBuffer;
 import java.io.IOException;
+import java.net.StandardSocketOptions;
 import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
 import org.apache.logging.log4j.LogManager;
@@ -26,10 +27,11 @@ public class FrontendConnection extends Connection {
 
   public FrontendConnection(String reactorName, SocketChannel socketChannel,
       ConByteBuffer readBuffer,
-      ConByteBuffer writeBuffer) {
+      ConByteBuffer writeBuffer) throws IOException {
     this.reactorName = reactorName;
     this.state = FrontendInitialHandshakeState.instance();
     this.socketChannel = socketChannel;
+    this.socketChannel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
     this.readBuffer = readBuffer;
     this.writeBuffer = writeBuffer;
     this.taskQueue = new LinkedList();
