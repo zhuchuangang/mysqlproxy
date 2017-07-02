@@ -80,13 +80,13 @@ public abstract class Connection {
         enableWrite(false);
       }
     } else {
-      if (selectionKey.isValid() && !selectionKey.isReadable()) {
-        //logger.info("doWriteData enable read operation");
-        enableRead(false);
-      }
       if (selectionKey.isValid() && selectionKey.isWritable()) {
         //logger.info("doWriteData disable write operation");
         disableWrite();
+      }
+      if (selectionKey.isValid() && !selectionKey.isReadable()) {
+        //logger.info("doWriteData enable read operation");
+        enableRead(false);
       }
     }
   }

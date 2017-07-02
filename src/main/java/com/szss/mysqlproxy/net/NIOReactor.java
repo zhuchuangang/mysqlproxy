@@ -63,20 +63,24 @@ public class NIOReactor extends Thread {
         continue;
       }
       Iterator<SelectionKey> iterator = keys.iterator();
+      logger.debug("selection key number is {}",keys.size());
       while (iterator.hasNext()) {
         Connection con = null;
         try {
           SelectionKey key = iterator.next();
+          //一定要尽可能早的清楚IO事件，否则可能造成重复执行的情况
+          iterator.remove();
           con = (Connection) key.attachment();
           if (con != null) {
             if (key.isValid() && key.isReadable()) {
+              logger.debug("start reading the data");
               con.doReadData();
             }
             if (key.isValid() && key.isWritable()) {
+              logger.debug("start writing the data");
               con.doWriteData();
             }
           }
-          iterator.remove();
         } catch (Exception e) {
           if (e instanceof CancelledKeyException) {
             if (logger.isDebugEnabled()) {
