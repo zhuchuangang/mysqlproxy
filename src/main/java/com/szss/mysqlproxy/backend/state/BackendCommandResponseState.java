@@ -3,10 +3,10 @@ package com.szss.mysqlproxy.backend.state;
 import com.szss.mysqlproxy.backend.BackendConnection;
 import com.szss.mysqlproxy.net.Connection;
 import com.szss.mysqlproxy.net.buffer.ConByteBuffer;
-import com.szss.mysqlproxy.protocol.MySQLPacket;
-import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
 
 /**
  * Created by zcg on 2017/6/21.
@@ -60,8 +60,9 @@ public class BackendCommandResponseState implements BackendState {
         connection.setHeader(null);
       }
 
-      //情况2的后续处理
+      //情况2的后续处理,如果没有缓存包头，但是还有剩余没有读取字节，说明是包体没有读完
       if (connection.getHeader() == null && leftSize != 0) {
+        //如果数据包总长度-初始位置>=剩余包的长度  说明没有读完的包在这次的数据包中完整的包含，否则说明数据包的包体部分还没有读完
         if (limit-offset>=leftSize) {
           offset += leftSize;
           //logger.info("B.  Skip {} bytes", leftSize);
@@ -97,6 +98,12 @@ public class BackendCommandResponseState implements BackendState {
       length = Connection.getPacketLength(dataBuffer, offset);
       //logger.info("The packet length is {}", length);
 
+      //解析报文类型
+      packetType = dataBuffer.getByte(offset + Connection.MYSQL_PACKET_HEADER_SIZE);
+      logger.info("The packet type is 0x{}", Integer.toHexString(packetType & 0xff));
+      //根据报文类型和当前连接的状态，推动连接状态变化
+      connection.nextConnectionState(packetType,offset);
+
       //情况2：readBuffer中最后一个mysql报文的包体没有读完
       //如果包体部分没有读完，计算下次reactor读取数据后，offset位移的字节数
       if (offset + length > limit) {
@@ -107,16 +114,11 @@ public class BackendCommandResponseState implements BackendState {
         //跳出循环，到此readBuffer已经解析完毕
         break;
       }
-
-      //解析报文类型
-      packetType = dataBuffer.getByte(offset + Connection.MYSQL_PACKET_HEADER_SIZE);
-      //logger.info("The packet type is 0x{}", Integer.toHexString(packetType & 0xff));
       //完整的报文，直接根据报文长度，位移到下一个报文的开始位置
       offset += length;
       //logger.info("C.  Skip {} bytes", length);
       dataBuffer.setReadingPos(offset);
-      //根据报文类型和当前连接的状态，推动连接状态变化
-      connection.nextConnectionState(packetType);
+
     }
     //还原到初始的offset
     dataBuffer.setReadingPos(initOffset);

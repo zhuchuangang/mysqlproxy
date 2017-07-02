@@ -5,12 +5,13 @@ import com.szss.mysqlproxy.frontend.state.FrontendInitialHandshakeState;
 import com.szss.mysqlproxy.frontend.state.FrontendState;
 import com.szss.mysqlproxy.net.Connection;
 import com.szss.mysqlproxy.net.buffer.ConByteBuffer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.net.StandardSocketOptions;
 import java.nio.channels.SocketChannel;
 import java.util.LinkedList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Created by zcg on 2017/5/2.

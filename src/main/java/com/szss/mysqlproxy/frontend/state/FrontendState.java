@@ -1,6 +1,7 @@
 package com.szss.mysqlproxy.frontend.state;
 
 import com.szss.mysqlproxy.frontend.FrontendConnection;
+
 import java.io.IOException;
 
 /**

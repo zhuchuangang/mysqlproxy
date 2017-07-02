@@ -4,6 +4,7 @@ import com.szss.mysqlproxy.protocol.constants.CapabilityFlags;
 import com.szss.mysqlproxy.protocol.constants.StatusFlags;
 import com.szss.mysqlproxy.protocol.support.BufferUtil;
 import com.szss.mysqlproxy.protocol.support.MySQLMessage;
+
 import java.nio.ByteBuffer;
 
 /**

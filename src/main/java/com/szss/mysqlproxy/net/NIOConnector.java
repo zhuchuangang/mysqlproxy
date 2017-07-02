@@ -2,6 +2,9 @@ package com.szss.mysqlproxy.net;
 
 import com.szss.mysqlproxy.backend.BackendConnection;
 import com.szss.mysqlproxy.util.SystemConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -11,8 +14,6 @@ import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Created by zcg on 2017/5/2.

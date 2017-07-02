@@ -4,6 +4,7 @@ import com.szss.mysqlproxy.protocol.HandshakeV10Packet;
 import com.szss.mysqlproxy.protocol.constants.CapabilityFlags;
 import com.szss.mysqlproxy.protocol.constants.StatusFlags;
 import com.szss.mysqlproxy.protocol.support.RandomUtil;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 

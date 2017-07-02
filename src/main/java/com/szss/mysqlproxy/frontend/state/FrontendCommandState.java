@@ -4,9 +4,10 @@ import com.szss.mysqlproxy.backend.BackendConnection;
 import com.szss.mysqlproxy.backend.BackendConnectionPool;
 import com.szss.mysqlproxy.frontend.FrontendConnection;
 import com.szss.mysqlproxy.net.Connection;
-import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
 
 /**
  * Created by zcg on 2017/6/19.

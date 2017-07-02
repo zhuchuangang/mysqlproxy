@@ -2,14 +2,15 @@ package com.szss.mysqlproxy.net;
 
 import com.szss.mysqlproxy.frontend.FrontendConnection;
 import com.szss.mysqlproxy.frontend.FrontendConnectionFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.ThreadLocalRandom;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * acceptor服务启动serverSocketChannel,并接受客户端连接,不使用selector绑定OP_ACCEPT事件

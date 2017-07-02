@@ -5,6 +5,9 @@ import com.szss.mysqlproxy.backend.BackendConnectionFactory;
 import com.szss.mysqlproxy.backend.BackendConnectionPool;
 import com.szss.mysqlproxy.net.buffer.BufferPool;
 import com.szss.mysqlproxy.util.SystemConfig;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.SelectionKey;
@@ -12,8 +15,6 @@ import java.nio.channels.Selector;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * reactor作为IO线程，业务处理的handler线程在线程池中执行
@@ -68,7 +69,7 @@ public class NIOReactor extends Thread {
         Connection con = null;
         try {
           SelectionKey key = iterator.next();
-          //一定要尽可能早的清楚IO事件，否则可能造成重复执行的情况
+          //一定要尽可能早的清除IO事件，否则可能造成重复执行的情况
           iterator.remove();
           con = (Connection) key.attachment();
           if (con != null) {

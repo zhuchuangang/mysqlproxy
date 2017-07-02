@@ -1,6 +1,7 @@
 package com.szss.mysqlproxy.protocol;
 
 import com.szss.mysqlproxy.protocol.support.MySQLMessage;
+
 import java.nio.ByteBuffer;
 
 /**

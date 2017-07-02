@@ -10,11 +10,12 @@ import com.szss.mysqlproxy.protocol.OKPacket;
 import com.szss.mysqlproxy.protocol.constants.ErrorCode;
 import com.szss.mysqlproxy.protocol.constants.StatusFlags;
 import com.szss.mysqlproxy.protocol.support.SecurityUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Created by zcg on 2017/6/18.

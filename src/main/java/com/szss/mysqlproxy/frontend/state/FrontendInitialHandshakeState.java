@@ -4,10 +4,11 @@ import com.szss.mysqlproxy.frontend.FakeMysqlServer;
 import com.szss.mysqlproxy.frontend.FrontendConnection;
 import com.szss.mysqlproxy.net.buffer.ConByteBuffer;
 import com.szss.mysqlproxy.protocol.HandshakeV10Packet;
-import java.io.IOException;
-import java.nio.ByteBuffer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * Created by zcg on 2017/6/15.

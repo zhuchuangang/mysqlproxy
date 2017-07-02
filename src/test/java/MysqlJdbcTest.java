@@ -2,12 +2,9 @@
  * Created by zcg on 2017/4/3.
  */
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import org.junit.Test;
+
+import java.sql.*;
 
 
 public class MysqlJdbcTest {
