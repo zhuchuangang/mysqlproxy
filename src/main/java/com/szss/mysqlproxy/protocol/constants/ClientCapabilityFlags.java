@@ -11,6 +11,8 @@ public class ClientCapabilityFlags {
         flag |= CapabilityFlags.CLIENT_LONG_FLAG.getCode();
         flag |= CapabilityFlags.CLIENT_CONNECT_WITH_DB.getCode();
         flag |= CapabilityFlags.CLIENT_ODBC.getCode();
+        //客户端需要支持LOAD DATA
+        flag |= CapabilityFlags.CLIENT_LOCAL_FILES.getCode();
         flag |= CapabilityFlags.CLIENT_IGNORE_SPACE.getCode();
         flag |= CapabilityFlags.CLIENT_PROTOCOL_41.getCode();
         flag |= CapabilityFlags.CLIENT_INTERACTIVE.getCode();
