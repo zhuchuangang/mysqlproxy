@@ -2,6 +2,7 @@ package com.szss.mysqlproxy.frontend.state;
 
 import com.szss.mysqlproxy.backend.BackendConnection;
 import com.szss.mysqlproxy.backend.BackendConnectionPool;
+import com.szss.mysqlproxy.backend.state.BackendHandshakeResponseState;
 import com.szss.mysqlproxy.frontend.FrontendConnection;
 import com.szss.mysqlproxy.net.Connection;
 import org.apache.logging.log4j.LogManager;
@@ -14,45 +15,50 @@ import java.io.IOException;
  */
 public class FrontendCommandState implements FrontendState {
 
-  private static Logger logger = LogManager.getLogger(FrontendCommandState.class);
+    private static Logger logger = LogManager.getLogger(FrontendCommandState.class);
 
-  private static FrontendCommandState state;
+    private static FrontendCommandState state;
 
-  private FrontendCommandState() {
-  }
-
-  public static FrontendCommandState instance() {
-    if (state == null) {
-      state = new FrontendCommandState();
+    private FrontendCommandState() {
     }
-    return state;
-  }
 
-  @Override
-  public void handle(FrontendConnection connection) throws IOException {
-    if (connection.getBackendConnection() == null) {
-      BackendConnectionPool connectionPool = BackendConnectionPool.getInstance();
-      BackendConnection backendCon = connectionPool.connection(connection.getReactorName());
-      connection.setBackendConnection(backendCon);
+    public static FrontendCommandState instance() {
+        if (state == null) {
+            state = new FrontendCommandState();
+        }
+        return state;
     }
-    if (connection.getBackendConnection().getConnectionState() == Connection.CONNECTING_STATE) {
-      connection.getTaskQueue().add(() -> {
+
+    @Override
+    public void handle(FrontendConnection connection) throws IOException {
+        if (connection.getBackendConnection() == null) {
+            BackendConnectionPool connectionPool = BackendConnectionPool.getInstance();
+            BackendConnection backendCon = connectionPool.connection(connection.getReactorName());
+            connection.setBackendConnection(backendCon);
+        }
         BackendConnection backendCon = connection.getBackendConnection();
-        logger.info("mysql backend connection is idle,share the buffer of front connection!");
-        if (backendCon.getReadBuffer() != connection.getWriteBuffer()) {
-          backendCon.setReadBuffer(connection.getWriteBuffer());
+        if (backendCon.getConnectionState() == Connection.CONNECTING_STATE) {
+            connection.getTaskQueue().add(() -> {
+                logger.info("mysql backend connection is idle,share the buffer of front connection!");
+                if (backendCon.getReadBuffer() != connection.getWriteBuffer()) {
+                    backendCon.setReadBuffer(connection.getWriteBuffer());
+                }
+                if (backendCon.getWriteBuffer() != connection.getReadBuffer()) {
+                    backendCon.setWriteBuffer(connection.getReadBuffer());
+                }
+                backendCon.enableWrite(false);
+            });
+        } else {
+            //如果后端连接是从其他闲置连接借用过来，需要后端连接需要绑定前段连接的buffer
+            if (backendCon.getWriteBuffer() == null && backendCon.getReadBuffer() == null) {
+                backendCon.setWriteBuffer(connection.getReadBuffer());
+                backendCon.setReadBuffer(connection.getWriteBuffer());
+            }
+            //根据前段报文类型，推动状态机状态变化
+            byte packetType = connection.getBackendConnection().getWriteBuffer().getByte(4);
+            connection.getBackendConnection().nextConnectionState(packetType);
+            logger.info("frontend enable write");
+            connection.getBackendConnection().enableWrite(false);
         }
-        if (backendCon.getWriteBuffer() != connection.getReadBuffer()) {
-          backendCon.setWriteBuffer(connection.getReadBuffer());
-        }
-        backendCon.enableWrite(false);
-      });
-    } else {
-      //根据前段报文类型，推动状态机状态变化
-      byte packetType = connection.getBackendConnection().getWriteBuffer().getByte(4);
-      connection.getBackendConnection().nextConnectionState(packetType);
-      logger.info("frontend enable write");
-      connection.getBackendConnection().enableWrite(false);
     }
-  }
 }

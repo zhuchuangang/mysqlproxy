@@ -25,7 +25,6 @@ public abstract class Connection {
     protected ConByteBuffer writeBuffer;
     protected String reactorName;
 
-
     protected boolean inTransaction;
     protected boolean autoCommit;
     protected boolean moreResults;
@@ -40,6 +39,9 @@ public abstract class Connection {
     protected boolean slowQuery;
     protected boolean psOutParams;
 
+    protected int connectionState;
+    //最后执行时间
+    protected long executionTimeAtLast;
 
     public static final int CONNECTING_STATE = 0;
     public static final int IDLE_STATE = 1;
@@ -64,6 +66,8 @@ public abstract class Connection {
     public abstract void handle() throws IOException;
 
     public void doReadData() throws IOException {
+        //最后执行时间
+        executionTimeAtLast = System.currentTimeMillis();
         int readNum = readBuffer.transferFrom(socketChannel);
         if (readNum == 0) {
             return;
@@ -80,6 +84,8 @@ public abstract class Connection {
 
 
     public void doWriteData() throws IOException {
+        //最后执行时间
+        executionTimeAtLast = System.currentTimeMillis();
         int writeNum = writeBuffer.transferTo(socketChannel);
         boolean hasRemaining = writeBuffer.hasRemaining();
         if (this instanceof BackendConnection) {
@@ -196,9 +202,32 @@ public abstract class Connection {
             sessionChanged = (serverStatus >> 10 & 1) == 1;
             slowQuery = (serverStatus >> 11 & 1) == 1;
             psOutParams = (serverStatus >> 12 & 1) == 1;
-        }else {
+        } else {
             logger.debug("this packet is not EOF packet.");
         }
+    }
+
+    public boolean idle() {
+        if (!inTransaction && connectionState == IDLE_STATE) {
+            return true;
+        }
+        return false;
+    }
+
+    protected void resetServerStatus() {
+        inTransaction = false;
+        autoCommit = false;
+        moreResults = false;
+        multiQuery = false;
+        badIndex = false;
+        noIndex = false;
+        cursorExists = false;
+        lastRow = false;
+        databaseDropped = false;
+        escapse = false;
+        sessionChanged = false;
+        slowQuery = false;
+        psOutParams = false;
     }
 
     public SocketChannel getSocketChannel() {
@@ -231,5 +260,13 @@ public abstract class Connection {
 
     public void setReactorName(String reactorName) {
         this.reactorName = reactorName;
+    }
+
+    public long getExecutionTimeAtLast() {
+        return executionTimeAtLast;
+    }
+
+    public void setExecutionTimeAtLast(long executionTimeAtLast) {
+        this.executionTimeAtLast = executionTimeAtLast;
     }
 }

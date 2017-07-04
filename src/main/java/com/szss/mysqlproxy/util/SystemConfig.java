@@ -9,6 +9,8 @@ public class SystemConfig {
   private String database;
   private String username;
   private String password;
+  //后端连接空闲的最大时间间隔，默认60秒
+  private long  idleMaxInterval=60000;
   //每个reactor连接池大小
   private int initSize;
 
@@ -70,5 +72,13 @@ public class SystemConfig {
 
   public void setInitSize(int initSize) {
     this.initSize = initSize;
+  }
+
+  public long getIdleMaxInterval() {
+    return idleMaxInterval;
+  }
+
+  public void setIdleMaxInterval(long idleMaxInterval) {
+    this.idleMaxInterval = idleMaxInterval;
   }
 }

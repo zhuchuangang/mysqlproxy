@@ -27,7 +27,6 @@ public class BackendConnection extends Connection {
     public static final int RESULT_FAIL_STATUS = 29;
 
     private BackendState state;
-    private int connectionState;
     //还有多少字节包头或包体读完
     private int leftSize = 0;
     //如果是包头没有读完，那么缓存上次度过的一部分包头，header大小为4个字节
@@ -103,6 +102,18 @@ public class BackendConnection extends Connection {
                 break;
         }
         logger.info("The next state of the back connection is {}", connectionState);
+    }
+
+    public void reset() {
+        //解除前段连接的绑定
+        frontendConnection.setBackendConnection(null);
+        frontendConnection = null;
+        //重置所有mysql服务状态
+        resetServerStatus();
+        //解除前段buffer绑定
+        readBuffer = null;
+        writeBuffer = null;
+        executionTimeAtLast = System.currentTimeMillis();
     }
 
     public BackendState getState() {

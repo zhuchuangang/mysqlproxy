@@ -117,7 +117,8 @@ public class NIOReactor extends Thread {
     }
   }
 
-  public void initBackendConnetion() throws IOException {
+  public void initBackendConnection() throws IOException {
+    logger.info("init backend connection pool of {} reactor");
     int initSize = SystemConfig.instance().getInitSize();
     BackendConnectionPool conPool = BackendConnectionPool.getInstance();
     for (int i = 0; i < initSize; i++) {

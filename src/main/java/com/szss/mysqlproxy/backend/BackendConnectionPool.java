@@ -1,9 +1,11 @@
 package com.szss.mysqlproxy.backend;
 
+import com.szss.mysqlproxy.util.SystemConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,19 +16,18 @@ import java.util.concurrent.ConcurrentHashMap;
 public class BackendConnectionPool {
 
     private static Logger logger = LogManager.getLogger(BackendConnectionPool.class);
-
-    private static ThreadLocal<BackendConnectionPool> backendConnectionPools = new ThreadLocal<>();
     private ConcurrentHashMap<String, List<BackendConnection>> conMap;
+    private ConcurrentHashMap<String, List<BackendConnection>> usedConMap;
+    private static BackendConnectionPool pool;
 
     private BackendConnectionPool() {
-        conMap = new ConcurrentHashMap();
+        conMap = new ConcurrentHashMap<>();
+        usedConMap = new ConcurrentHashMap<>();
     }
 
     public static BackendConnectionPool getInstance() {
-        BackendConnectionPool pool = backendConnectionPools.get();
         if (pool == null) {
             pool = new BackendConnectionPool();
-            backendConnectionPools.set(pool);
         }
         return pool;
     }
@@ -41,15 +42,46 @@ public class BackendConnectionPool {
     }
 
     public BackendConnection connection(String reactorName) throws IOException {
-        BackendConnection con = null;
-        List<BackendConnection> backendCons = conMap.get(reactorName);
-        if (backendCons != null && !backendCons.isEmpty()) {
-            con = backendCons.remove(0);
+        BackendConnection chooseCon = null;
+        List<BackendConnection> poolCons = conMap.get(reactorName);
+        if (poolCons != null && !poolCons.isEmpty()) {
+            chooseCon = poolCons.remove(0);
         }
-        if (con == null) {
-            con = BackendConnectionFactory.make(reactorName);
+        if (chooseCon == null) {
+            List<BackendConnection> usedCons = usedConMap.get(reactorName);
+            if (usedCons != null) {
+                logger.debug("The count of the backend used connections is {}", usedCons.size());
+                int index = -1;
+                long maxInterval = 0;
+                long currentTime = System.currentTimeMillis();
+                long defaultMaxInterval = SystemConfig.instance().getIdleMaxInterval();
+                //后端连接处于空闲 不在事务过程中 后端连接空闲时间最长
+                for (int i = 0; i < usedCons.size(); i++) {
+                    BackendConnection c = usedCons.get(i);
+                    long currentInterval = currentTime - c.getExecutionTimeAtLast();
+                    if (c.idle() && defaultMaxInterval < currentInterval && maxInterval < currentInterval) {
+                        maxInterval = currentTime - c.getExecutionTimeAtLast();
+                        index = i;
+                    }
+                }
+                if (index != -1) {
+                    chooseCon = usedCons.get(index);
+                    logger.debug("The backend connection which is chosen is {}", chooseCon);
+                    chooseCon.reset();
+                    return chooseCon;
+                }
+            }
         }
-        return con;
+        if (chooseCon == null) {
+            chooseCon = BackendConnectionFactory.make(reactorName);
+        }
+        List<BackendConnection> usedCons = usedConMap.get(reactorName);
+        if (usedCons == null) {
+            usedCons = new ArrayList<>();
+            usedConMap.put(reactorName, usedCons);
+        }
+        usedCons.add(chooseCon);
+        return chooseCon;
     }
 
 }
