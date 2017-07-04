@@ -2,6 +2,7 @@ package com.szss.mysqlproxy.frontend.state;
 
 import com.szss.mysqlproxy.backend.BackendConnection;
 import com.szss.mysqlproxy.backend.BackendConnectionPool;
+import com.szss.mysqlproxy.backend.state.BackendCommandResponseState;
 import com.szss.mysqlproxy.backend.state.BackendHandshakeResponseState;
 import com.szss.mysqlproxy.frontend.FrontendConnection;
 import com.szss.mysqlproxy.net.Connection;
@@ -31,7 +32,10 @@ public class FrontendCommandState implements FrontendState {
 
     @Override
     public void handle(FrontendConnection connection) throws IOException {
+        //后端连接是否是从连接池中获取的
+        boolean formPool = false;
         if (connection.getBackendConnection() == null) {
+            formPool = true;
             BackendConnectionPool connectionPool = BackendConnectionPool.getInstance();
             BackendConnection backendCon = connectionPool.connection(connection.getReactorName());
             connection.setBackendConnection(backendCon);
@@ -49,8 +53,9 @@ public class FrontendCommandState implements FrontendState {
                 backendCon.enableWrite(false);
             });
         } else {
-            //如果后端连接是从其他闲置连接借用过来，需要后端连接需要绑定前段连接的buffer
-            if (backendCon.getWriteBuffer() == null && backendCon.getReadBuffer() == null) {
+            //如果后端连接是从其他闲置连接借用过来或者从连接池中获取的，需要后端连接需要绑定前段连接的buffer
+            if (formPool) {
+                backendCon.setState(BackendCommandResponseState.instance());
                 backendCon.setWriteBuffer(connection.getReadBuffer());
                 backendCon.setReadBuffer(connection.getWriteBuffer());
             }

@@ -168,11 +168,6 @@ public abstract class MySQLPacket {
      */
     public static final byte COM_STMT_FETCH = 28;
 
-    /**
-     * Mycat heartbeat
-     */
-    public static final byte COM_HEARTBEAT = 64;
-
 
     //   //https://dev.mysql.com/doc/internals/en/mysql-packet.html
     public int packetLength;    // 3字节

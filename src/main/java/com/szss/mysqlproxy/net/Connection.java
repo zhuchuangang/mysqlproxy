@@ -50,6 +50,9 @@ public abstract class Connection {
 
     public final static int MYSQL_PACKET_HEADER_SIZE = 4;
 
+    public Connection() {
+        this.connectionState = CONNECTING_STATE;
+    }
 
     public void register(Selector selector) throws IOException {
         this.selector = selector;
@@ -260,6 +263,14 @@ public abstract class Connection {
 
     public void setReactorName(String reactorName) {
         this.reactorName = reactorName;
+    }
+
+    public int getConnectionState() {
+        return connectionState;
+    }
+
+    public void setConnectionState(int connectionState) {
+        this.connectionState = connectionState;
     }
 
     public long getExecutionTimeAtLast() {

@@ -38,17 +38,10 @@ public class BackendHandshakeResponseState implements BackendState {
   @Override
   public void handle(BackendConnection connection) throws IOException {
     byte packetType = connection.getReadBuffer().getByte(5);
+    connection.nextConnectionState(packetType);
     if (packetType == MySQLPacket.OK_PACKET) {
       connection.setState(BackendCommandState.instance());
-      connection.setConnectionState(Connection.IDLE_STATE);
       FrontendConnection frontCon = connection.getFrontendConnection();
-//      if (frontCon != null) {
-//        //后端登录验证成功，共享前后端buffer
-//        logger.info("The backend connection connect successful,mysql backend connection is idle,share the buffer of front connection!");
-//        connection.setWriteBuffer(frontCon.getReadBuffer());
-//        connection.setReadBuffer(frontCon.getWriteBuffer());
-//      }
-      logger.info(System.currentTimeMillis());
       if (frontCon!=null&&!frontCon.getTaskQueue().isEmpty()) {
         connection.getState().handle(connection);
       }

@@ -34,9 +34,9 @@ public class Bootstrap {
       connector.start();
       acceptor.start();
 
-//      for (NIOReactor reactor : reactors) {
-//        reactor.initBackendConnetion();
-//      }
+      for (NIOReactor reactor : reactors) {
+        reactor.initBackendConnectionPool();
+      }
 
     } catch (Exception e) {
       e.printStackTrace();
