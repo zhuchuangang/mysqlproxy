@@ -35,7 +35,7 @@ public class BackendCommandResponseState implements BackendState {
     int length = 0;
     int limit = dataBuffer.writingPos();
     int initOffset = offset;
-    logger.info("offset="+offset+"  limit="+limit);
+    //logger.info("offset="+offset+"  limit="+limit);
 
     // 循环收到的报文处理
     //报文处理分两种情况：1.包头没有读完 2.包体没有读完
@@ -128,7 +128,7 @@ public class BackendCommandResponseState implements BackendState {
       connection.setHeader(null);
     }
     //将报文由前段连接写出
-    logger.info("backend enable write");
+    logger.info("frontend enable write");
     connection.getFrontendConnection().enableWrite(false);
   }
 }

@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
+import java.net.StandardSocketOptions;
 import java.nio.channels.SocketChannel;
 
 /**
@@ -36,11 +37,13 @@ public class BackendConnection extends Connection {
 
     public BackendConnection(String reactorName, SocketChannel socketChannel,
                              ConByteBuffer readBuffer,
-                             ConByteBuffer writeBuffer) {
+                             ConByteBuffer writeBuffer) throws IOException {
         super();
         this.leftSize = 0;
         this.reactorName = reactorName;
         this.socketChannel = socketChannel;
+//        this.socketChannel.setOption(StandardSocketOptions.SO_SNDBUF, 1024 * 1024);
+//        this.socketChannel.setOption(StandardSocketOptions.SO_RCVBUF, 4 * 1024 * 1024);
         this.readBuffer = readBuffer;
         this.writeBuffer = writeBuffer;
         this.state = BackendHandshakeResponseState.instance();
@@ -106,7 +109,7 @@ public class BackendConnection extends Connection {
                 }
                 break;
         }
-        logger.info("The next state of the back connection is {}", connectionState);
+        //logger.info("The next state of the back connection is {}", connectionState);
     }
 
     public void reset() {

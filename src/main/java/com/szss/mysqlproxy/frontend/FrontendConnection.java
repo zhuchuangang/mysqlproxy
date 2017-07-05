@@ -38,7 +38,8 @@ public class FrontendConnection extends Connection {
         this.state = FrontendInitialHandshakeState.instance();
         this.socketChannel = socketChannel;
         this.socketChannel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
-        this.socketChannel.setOption(StandardSocketOptions.SO_SNDBUF, 4 * 1024 * 1024);
+//        this.socketChannel.setOption(StandardSocketOptions.SO_SNDBUF, 4 * 1024 * 1024);
+//        this.socketChannel.setOption(StandardSocketOptions.SO_RCVBUF, 1024 * 1024);
         this.readBuffer = readBuffer;
         this.writeBuffer = writeBuffer;
         this.taskQueue = new LinkedList();
