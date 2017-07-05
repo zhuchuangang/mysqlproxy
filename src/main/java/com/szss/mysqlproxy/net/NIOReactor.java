@@ -74,11 +74,11 @@ public class NIOReactor extends Thread {
           con = (Connection) key.attachment();
           if (con != null) {
             if (key.isValid() && key.isReadable()) {
-              logger.debug("start reading the data");
+              //logger.debug("start reading the data");
               con.doReadData();
             }
             if (key.isValid() && key.isWritable()) {
-              logger.debug("start writing the data");
+              //logger.debug("start writing the data");
               con.doWriteData();
             }
           }

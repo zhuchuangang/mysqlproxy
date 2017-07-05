@@ -100,7 +100,7 @@ public class BackendCommandResponseState implements BackendState {
 
       //解析报文类型
       packetType = dataBuffer.getByte(offset + Connection.MYSQL_PACKET_HEADER_SIZE);
-      logger.info("The packet type is 0x{}", Integer.toHexString(packetType & 0xff));
+      //logger.info("The packet type is 0x{}", Integer.toHexString(packetType & 0xff));
       //根据报文类型和当前连接的状态，推动连接状态变化
       connection.nextConnectionState(packetType,offset);
 
