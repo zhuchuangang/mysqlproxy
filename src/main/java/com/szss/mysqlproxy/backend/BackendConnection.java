@@ -42,8 +42,8 @@ public class BackendConnection extends Connection {
         this.leftSize = 0;
         this.reactorName = reactorName;
         this.socketChannel = socketChannel;
-//        this.socketChannel.setOption(StandardSocketOptions.SO_SNDBUF, 1024 * 1024);
-//        this.socketChannel.setOption(StandardSocketOptions.SO_RCVBUF, 4 * 1024 * 1024);
+        this.socketChannel.setOption(StandardSocketOptions.SO_SNDBUF, 1024 * 1024);
+        this.socketChannel.setOption(StandardSocketOptions.SO_RCVBUF, 4 * 1024 * 1024);
         this.readBuffer = readBuffer;
         this.writeBuffer = writeBuffer;
         this.state = BackendHandshakeResponseState.instance();

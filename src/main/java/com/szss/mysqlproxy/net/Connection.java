@@ -102,6 +102,7 @@ public abstract class Connection {
             }
         } else {
             if (selectionKey.isValid() && !selectionKey.isReadable()&&selectionKey.isWritable()) {
+                logger.info("readable is {}",selectionKey.isReadable());
                 enableReadAndDisableWrite(false);
             }
         }
@@ -111,7 +112,7 @@ public abstract class Connection {
     public void disableReadAndEnableWrite(boolean wakeup) {
         boolean needWakeup = false;
         try {
-            selectionKey.interestOps(~SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+            selectionKey.interestOps(SelectionKey.OP_WRITE);
             logger.info("disable read operation and enable write operation");
             needWakeup = true;
         } catch (Exception e) {
@@ -126,7 +127,7 @@ public abstract class Connection {
     public void enableReadAndDisableWrite(boolean wakeup) {
         boolean needWakeup = false;
         try {
-            selectionKey.interestOps(SelectionKey.OP_READ & ~SelectionKey.OP_WRITE);
+            selectionKey.interestOps(SelectionKey.OP_READ);
             logger.info("enable read operation and disable write operation");
             needWakeup = true;
         } catch (Exception e) {
@@ -176,11 +177,11 @@ public abstract class Connection {
     public void enableWrite(boolean wakeup) {
         boolean needWakeup = false;
         try {
-            selectionKey.interestOps(selectionKey.interestOps() | SelectionKey.OP_WRITE);
+            selectionKey.interestOps(SelectionKey.OP_WRITE);
             logger.info("enable write operation");
             needWakeup = true;
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             logger.error("can't enable write {},connection is {}", e, this);
         }
         if (needWakeup && wakeup) {

@@ -21,113 +21,118 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class NIOReactor extends Thread {
 
-  private static Logger logger = LogManager.getLogger(NIOReactor.class);
+    private static Logger logger = LogManager.getLogger(NIOReactor.class);
 
-  private static final String PREFIX_NAME = "nio-reactor-";
+    private static final String PREFIX_NAME = "nio-reactor-";
 
-  private BufferPool bufferPool;
-  //每个reactor都有各自的selector
-  private Selector selector;
-  //注册队列
-  private ConcurrentLinkedQueue<Connection> registerQueue;
+    private BufferPool bufferPool;
+    //每个reactor都有各自的selector
+    private Selector selector;
+    //注册队列
+    private ConcurrentLinkedQueue<Connection> registerQueue;
 
-  public NIOReactor(int index) throws IOException {
-    this.bufferPool = new BufferPool(1024 * 1024 * 100, 1024*1024);
-    this.selector = Selector.open();
-    this.registerQueue = new ConcurrentLinkedQueue();
-    setName(PREFIX_NAME + index);
-    logger.info("{} create reactor thread:{}", getName(), getName());
-  }
+    public NIOReactor(int index) throws IOException {
+        this.bufferPool = new BufferPool(1024 * 1024 * 100, 1024 * 1024);
+        this.selector = Selector.open();
+        this.registerQueue = new ConcurrentLinkedQueue();
+        setName(PREFIX_NAME + index);
+        logger.info("{} create reactor thread:{}", getName(), getName());
+    }
 
-  public void postRegister(Connection connection) {
-    registerQueue.offer(connection);
-    selector.wakeup();
-    logger.info("{} add the channel to register queue,and wakeup selector", getName());
-  }
+    public void postRegister(Connection connection) {
+        registerQueue.offer(connection);
+        selector.wakeup();
+        logger.info("{} add the channel to register queue,and wakeup selector", getName());
+    }
 
 
-  @Override
-  public void run() {
-    Set<SelectionKey> keys;
-    int selectNum = 0;
-    while (!Thread.interrupted()) {
-      try {
-        selectNum = selector.select(400 / (selectNum + 1));
-        //System.out.println(getName() + " there is " + selectNum + " ready event");
-        if (selectNum == 0) {
-          register();
-          continue;
+    @Override
+    public void run() {
+        Set<SelectionKey> keys;
+        int selectNum = 0;
+        while (!Thread.interrupted()) {
+            try {
+                selectNum = selector.select(400 / (selectNum + 1));
+                //System.out.println(getName() + " there is " + selectNum + " ready event");
+                if (selectNum == 0) {
+                    register();
+                    continue;
+                }
+                keys = selector.selectedKeys();
+            } catch (IOException e) {
+                e.printStackTrace();
+                continue;
+            }
+            Iterator<SelectionKey> iterator = keys.iterator();
+            logger.debug("selection key number is {}", keys.size());
+            while (iterator.hasNext()) {
+                Connection con = null;
+                try {
+                    SelectionKey key = iterator.next();
+                    con = (Connection) key.attachment();
+                    if (con != null&&key.isValid()) {
+                        if (key.isReadable()) {
+                            logger.debug("start reading the data");
+                            con.doReadData();
+                        }
+                        if(key.isValid() == false){
+                            continue;
+                        }
+                        if (key.isWritable()) {
+                            logger.debug("start writing the data");
+                            con.doWriteData();
+                        }
+                    }else{
+                        key.cancel();
+                    }
+                } catch (Exception e) {
+                    if (e instanceof CancelledKeyException) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("{} socket key canceled", con);
+                        }
+                    } else {
+                        logger.warn("connection is error,{}", e);
+                    }
+                } finally {
+                    iterator.remove();
+                }
+            }
+            keys.clear();
         }
-        keys = selector.selectedKeys();
-      } catch (IOException e) {
-        e.printStackTrace();
-        continue;
-      }
-      Iterator<SelectionKey> iterator = keys.iterator();
-      logger.debug("selection key number is {}",keys.size());
-      while (iterator.hasNext()) {
-        Connection con = null;
-        try {
-          SelectionKey key = iterator.next();
-          //一定要尽可能早的清除IO事件，否则可能造成重复执行的情况
-          iterator.remove();
-          con = (Connection) key.attachment();
-          if (con != null) {
-            if (key.isValid() && key.isReadable()) {
-              //logger.debug("start reading the data");
-              con.doReadData();
-            }
-            if (key.isValid() && key.isWritable()) {
-              //logger.debug("start writing the data");
-              con.doWriteData();
-            }
-          }
-        } catch (Exception e) {
-          if (e instanceof CancelledKeyException) {
+    }
+
+    private void register() {
+        if (registerQueue.isEmpty()) {
+            return;
+        }
+        Connection c = null;
+        while ((c = registerQueue.poll()) != null) {
             if (logger.isDebugEnabled()) {
-              logger.debug("{} socket key canceled", con);
+                logger.debug("{} register queue poll {}", getName(), c);
             }
-          } else {
-            logger.warn("connection is error", e);
-          }
+            try {
+                c.register(selector);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("{} register channel to listen for read event",
+                            getName(), c);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-      }
-      keys.clear();
     }
-  }
 
-  private void register() {
-    if (registerQueue.isEmpty()) {
-      return;
-    }
-    Connection c = null;
-    while ((c = registerQueue.poll()) != null) {
-      if (logger.isDebugEnabled()) {
-        logger.debug("{} register queue poll {}", getName(), c);
-      }
-      try {
-        c.register(selector);
-        if (logger.isDebugEnabled()) {
-          logger.debug("{} register channel to listen for read event",
-              getName(), c);
+    public void initBackendConnectionPool() throws IOException {
+        logger.info("init backend connection pool of {} reactor", getName());
+        int initSize = SystemConfig.instance().getInitSize();
+        BackendConnectionPool conPool = BackendConnectionPool.getInstance();
+        for (int i = 0; i < initSize; i++) {
+            BackendConnection backendCon = BackendConnectionFactory.make(getName());
+            conPool.addConnection(backendCon);
         }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
     }
-  }
 
-  public void initBackendConnectionPool() throws IOException {
-    logger.info("init backend connection pool of {} reactor",getName());
-    int initSize = SystemConfig.instance().getInitSize();
-    BackendConnectionPool conPool = BackendConnectionPool.getInstance();
-    for (int i = 0; i < initSize; i++) {
-      BackendConnection backendCon = BackendConnectionFactory.make(getName());
-      conPool.addConnection(backendCon);
+    public BufferPool getBufferPool() {
+        return bufferPool;
     }
-  }
-
-  public BufferPool getBufferPool() {
-    return bufferPool;
-  }
 }
