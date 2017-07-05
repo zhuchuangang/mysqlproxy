@@ -106,7 +106,7 @@ public class BackendConnection extends Connection {
                 }
                 break;
         }
-        logger.info("The next state of the back connection is {}", connectionState);
+        //logger.info("The next state of the back connection is {}", connectionState);
     }
 
     public void reset() {

@@ -19,9 +19,9 @@
     </Appenders>
     <Loggers>
         <logger name="org.apache.*" level="WARN" additivity="false"/>
-        <Root level="debug">
+        <Root level="DEBUG">
             <AppenderRef ref="Console"/>
-            <AppenderRef ref="RollingFile"/>
+            <!--<AppenderRef ref="RollingFile"/>-->
         </Root>
     </Loggers>
 </Configuration>

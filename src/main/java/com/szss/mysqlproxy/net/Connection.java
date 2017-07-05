@@ -91,29 +91,50 @@ public abstract class Connection {
         executionTimeAtLast = System.currentTimeMillis();
         int writeNum = writeBuffer.transferTo(socketChannel);
         boolean hasRemaining = writeBuffer.hasRemaining();
-        if (this instanceof BackendConnection) {
-            logger.info("The backend connection write {} bytes,and hasRemaining is {}", writeNum, hasRemaining);
-        } else {
-            logger.info("The frontend connection write {} bytes,and hasRemaining is {}", writeNum, hasRemaining);
-        }
+//        if (this instanceof BackendConnection) {
+//            logger.info("The backend connection write {} bytes,and hasRemaining is {}", writeNum, hasRemaining);
+//        } else {
+//            logger.info("The frontend connection write {} bytes,and hasRemaining is {}", writeNum, hasRemaining);
+//        }
         if (hasRemaining) {
-            //if (selectionKey.isValid() && selectionKey.isReadable()) {
-            //logger.info("doWriteData disable read operation");
-            disableRead();
-            //}
-            if (selectionKey.isValid() && !selectionKey.isWritable()) {
-                //logger.info("doWriteData enable write operation");
-                enableWrite(false);
+            if (selectionKey.isValid() && selectionKey.isReadable()&&!selectionKey.isWritable()) {
+                disableReadAndEnableWrite(false);
             }
         } else {
-            if (selectionKey.isValid() && selectionKey.isWritable()) {
-                //logger.info("doWriteData disable write operation");
-                disableWrite();
+            if (selectionKey.isValid() && !selectionKey.isReadable()&&selectionKey.isWritable()) {
+                enableReadAndDisableWrite(false);
             }
-            if (selectionKey.isValid() && !selectionKey.isReadable()) {
-                //logger.info("doWriteData enable read operation");
-                enableRead(false);
-            }
+        }
+
+    }
+
+    public void disableReadAndEnableWrite(boolean wakeup) {
+        boolean needWakeup = false;
+        try {
+            selectionKey.interestOps(~SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+            logger.info("disable read operation and enable write operation");
+            needWakeup = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error("can't disable read operation or can't enable write operation {},connection is {}", e, this);
+        }
+        if (needWakeup && wakeup) {
+            selector.wakeup();
+        }
+    }
+
+    public void enableReadAndDisableWrite(boolean wakeup) {
+        boolean needWakeup = false;
+        try {
+            selectionKey.interestOps(SelectionKey.OP_READ & ~SelectionKey.OP_WRITE);
+            logger.info("enable read operation and disable write operation");
+            needWakeup = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.error("can't enable read operation or can't disable write operation {},connection is {}", e, this);
+        }
+        if (needWakeup && wakeup) {
+            selector.wakeup();
         }
     }
 
